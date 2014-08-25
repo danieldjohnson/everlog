@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <title></title>
+
+    <link href="lib/ionic/css/ionic.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+    <!-- IF using Sass (run gulp sass first), then uncomment below and remove the CSS includes above
+    <link href="css/ionic.app.css" rel="stylesheet">
+    -->
+
+    <!-- ionic/angularjs js -->
+    <script src="lib/ionic/js/ionic.bundle.js"></script>
+
+<script src="js/underscore-min.js"></script>
+
+<script src="js/md5.js"></script>
+<script src="js/lib-typedarrays-min.js"></script>
+
+<script src="js/base64util.js"></script>
+
+
+<script src="js/evernote-sdk-minified.js"></script>
+
+    <link rel="stylesheet" href="leaflet-0.7.3/leaflet.css" />
+<script src="leaflet-0.7.3/leaflet.js"></script>
+
+
+    <link rel="stylesheet" href="css/leaflet.label.css" />
+<script src="js/leaflet.label.js"></script>
+
+    <!-- cordova script (this will be a 404 during development) -->
+    <script src="cordova.js"></script>
+
+    <!-- your app's js -->
+    <script src="js/app.js"></script>
+    <script src="js/controllers.js"></script>
+    <script src="js/services.js"></script>
+    <script src="js/elastic.js"></script>
+
+    <script>
+      window.injectConsole = function(objs){
+        function applyToConstructor(constructor, argArray) {
+            var args = [null].concat(argArray);
+            var factoryFunction = constructor.bind.apply(constructor, args);
+            return new factoryFunction();
+        }
+        var nargs = [].concat(objs,'debugger;');
+        var fn = applyToConstructor(Function,nargs);
+        angular.element(document.body).injector().invoke(fn);
+      }
+      window.getService=function(svc){
+        return angular.element(document.body).injector().get(svc);
+      }
+    </script>
+  </head>
+  <body ng-app="everlog">
+
+    <ion-pane ng-controller="DayControl" id="mainpane">
+      <ion-header-bar class="bar-positive">
+        <button class="button button-icon icon ion-calendar" on-release="pickDate()" ng-disabled="!state.ready||state.working!=0"></button>
+        <h1 class="title">{{curdayDateStr}}</h1>
+        <button class="button button-icon icon ion-upload" ng-class="{'ion-upload':!state.uploading, 'ion-looping':state.uploading}" ng-disabled="state.uploading||!state.dirty||!state.ready||state.working!=0" on-release="upload()"></button>
+      </ion-header-bar>
+      <ion-content>
+        <div class="card">
+        <textarea name="curdayarea" class="curdaytext" ng-model="curdayText.text" msd-elastic placeholder="What did you do today?" ng-change="markDirty()" ng-disabled="!state.ready" ></textarea>
+        </div>
+        <div class="card">
+          <div class="item item-divider item-toggle">Places
+              <label class="toggle">
+                 <input type="checkbox" ng-model="locationAutodetect.active" ng-disabled="!state.ready">
+                 <div class="track">
+                   <div class="handle"></div>
+                 </div>
+              </label></div>
+          <button class="item button button-full button-icon icon ion-map" ng-disabled="!state.ready" on-release="addPlace()"> Add Place</button>
+          <ion-list can-swipe="state.ready">
+            <a class="item" on-tap="addBestPlace()">
+              <h2 class="suggested" ng-show="bestPlace!=null && locationAutodetect.active">{{bestPlace.name}}</h2>
+              <p>Autodetection <span ng-show="locationAutodetect.active">ON</span><span ng-hide="locationAutodetect.active">OFF</span></p>
+            </a>
+            <ion-item on-hold="detailPlace(place,$event)" ng-repeat="place in curdayPlaces">
+              <h2>{{place.name}}</h2>
+              <ion-option-button class="button-assertive  ion-minus-circled"
+                         on-release="deletePlace(place,$index)" ng-disabled="!state.ready"> Remove
+              </ion-option-button>
+            </ion-item>
+          </ion-list>
+          <div id="leafletmap" ng-hide="curdayPlaces.length==0" ng-click="showBigMap()"></div>
+        </div>
+        <div class="card">
+          <div class="item item-divider">Images</div>
+          <button class="item button button-full button-icon icon ion-images" ng-disabled="!state.ready" on-release="addImages()"> Add Images</button>
+          <ion-list class="imglist" can-swipe="state.ready">
+            <ion-item ng-repeat="img in curdayImgs | filter: {included:true}">
+              <img ng-show="img.url !== null" ng-src="{{img.url}}">
+              <p ng-show="img.url === null">Loading...</p>
+              <ion-option-button class="button-assertive  ion-minus-circled"
+                         on-release="deleteImage(img,$index)" ng-disabled="!state.ready"> Remove
+              </ion-option-button>
+            </ion-item>
+          </ion-list>
+        </div>
+      </ion-content>
+    </ion-pane>
+    <script id="placeDetailPopover.html" type="text/ng-template">
+      <ion-popover-view>
+        <ion-header-bar>
+          <h1 class="title" ng-show="activePlace.name!=null">{{activePlace.name}}</h1>
+          <button class="button button-icon icon ion-close-circled" on-release="detailPlaceHide()"></button>
+        </ion-header-bar>
+        <ion-content padding="true" class="pad">
+          <h3 ng-show="activePlace.location.formattedAddress!=null">Address:</h3>
+          <p ng-repeat="line in activePlace.location.formattedAddress">{{line}}</p>
+          <h3>Location:</h3>
+          <p>{{activePlace.lat}}, {{activePlace.lon}}</p>
+        </ion-content>
+      </ion-popover-view>
+    </script>
+    <script id="placeAddModal.html" type="text/ng-template">
+      <ion-modal-view ng-controller="placeAddControl">
+        <ion-header-bar class="bar-positive">
+          <h1 class="title">Add a Place</h1>
+          <button class="button button-icon icon ion-close-circled" on-tap="addPlaceHide()"></button>
+        </ion-header-bar>
+        <ion-content>
+          <div class="list" ng-show="locationReady">
+            <a class="item special" on-tap="customLocation()">Set Custom Place</a>
+            <div class="item item-divider">Latitude and Longitude</div>
+            <a class="item" on-tap="chooseLocation(null,null)">{{location.latitude}}, {{location.longitude}}</a>
+            <div class="item item-divider" ng-show="places.length>0">Places Nearby</div>
+            <a class="item" ng-repeat="place in places" on-tap="chooseLocation(place.name,place.location)">{{place.name}}</a>
+          </div>
+        </ion-content>
+      </ion-modal-view>
+    </script>
+    <script id="bigMapModal.html" type="text/ng-template">
+      <ion-modal-view>
+        <ion-header-bar class="bar-positive">
+          <h1 class="title">Places - {{curdayDateStr}}</h1>
+          <button class="button button-icon icon ion-close-circled" on-tap="bigMapHide()"></button>
+        </ion-header-bar>
+        
+          <div id="modalmap"></div>
+       
+      </ion-modal-view>
+    </script>
+  </body>
+</html>

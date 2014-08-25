@@ -1,0 +1,31 @@
+/* Empty. Add your own CSS if you like */
+.curdaytext {
+	padding:1em;
+	resize: none;
+}
+.pad{
+	padding:1em;
+}
+
+#leafletmap{
+	height:200px;
+}
+
+#modalmap{
+	width:100%;
+	top: 44px;
+	position:absolute;
+	bottom:0px;
+}
+
+.imglist .item img{
+	width:100%;
+}
+.item.special{
+	font-style:italic;
+}
+h2.suggested {
+	font-style:italic;
+	color:#4a87ee;
+
+}
