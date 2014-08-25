@@ -292,7 +292,7 @@ angular.module('everlog.controllers', ['everlog.services'])
 		console.log("Resuming");
 		if($scope.locationAutodetect.active) setupWatchLocation();
 		updateMap();
-		if(!$scope.state.dirty){
+		if($scope.ready&&$scope.state.working==0&&!$scope.state.dirty){
 			loadDate($scope.curdayDate);
 		}
 	})
