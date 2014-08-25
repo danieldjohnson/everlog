@@ -230,7 +230,7 @@ angular.module('everlog.services', [])
 .factory('elStaticMap',function(){
 	return {
 		getURL:function(places){
-			var url = 'https://maps.googleapis.com/maps/api/staticmap?size=500x500&scale=2&key=AIzaSyAETN1V2LIoHLL6KBQsy7EK6dIKXJpdabg&';
+			var url = 'https://maps.googleapis.com/maps/api/staticmap?size=500x500&scale=2&';
 			function getLabel(idx){
 				var labelstr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 				return labelstr[idx%labelstr.length];
