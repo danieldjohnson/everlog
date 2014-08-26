@@ -559,7 +559,7 @@ text1</li>
 				d.setMinutes(0);
 				d.setSeconds(0);
 				d.setMilliseconds(0);
-				note.created = d;
+				note.created = d.getTime();
 
 				tempPromise = _getDailyLogNb().then(function(nb){
 					console.log("Target nb:",nb);
