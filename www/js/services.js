@@ -493,7 +493,7 @@ text1</li>
 				return str;
 			}
 			function getDateStr(d){
-				return "" + d.getFullYear() + pad(d.getMonth(),2,'0') + pad(d.getDate(),2,'0');
+				return "" + d.getFullYear() + pad(d.getMonth()+1,2,'0') + pad(d.getDate(),2,'0');
 			}
 			var noteStore = _getNoteStore();
 			var filter = new NoteFilter();
